@@ -93,7 +93,7 @@ namespace Lab10NorthWind
                     Console.WriteLine("Ogiltig inmatning för ordning. Försök igen.");
                 }
             }
-            Console.Clear(); // Rensa konsoloutput efter att ha visat alla kunder
+            
         }
 
         static void ShowCustomerDetails()
@@ -128,7 +128,7 @@ namespace Lab10NorthWind
                     Console.WriteLine("Kund hittades inte.");
                 }
             }
-            Console.Clear(); // Rensa konsoloutput efter att ha visat detaljer för en kund
+            
         }
 
         static void AddCustomer()
