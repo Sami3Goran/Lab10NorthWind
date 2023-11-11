@@ -8,70 +8,106 @@ namespace Lab10NorthWind
     {
         static void Main(string[] args)
         {
+
+            while (true)
+            {
+                Console.WriteLine("1. Hämta alla kunder");
+                Console.WriteLine("2. Visa detaljer för en kund");
+                Console.WriteLine("3. Lägg till kund");
+                Console.WriteLine("4. Avsluta");
+
+                int choice;
+                if (int.TryParse(Console.ReadLine(), out choice))
+                {
+                    Console.Clear(); // Rensa konsoloutput
+
+                    switch (choice)
+                    {
+                        case 1:
+                            GetAllCustomers();
+                            break;
+                        case 2:
+                            ShowCustomerDetails();
+                            break;
+                        case 3:
+                            AddCustomer();
+                            break;
+                        case 4:
+                            Environment.Exit(0);
+                            break;
+                        default:
+                            Console.WriteLine("Ogiltigt val. Försök igen.");
+                            break;
+                    }
+                }
+                else
+                {
+                    Console.Clear(); // Rensa konsoloutput
+                    Console.WriteLine("Ogiltig inmatning. Försök igen.");
+                }
+
+                Console.WriteLine();
+            }
+        }
+
+        static void GetAllCustomers()
+        {
             using (var context = new NorthWindContext())
             {
-                var query1 = context.Customers
-                    .OrderBy(c1 => c1.CompanyName)
-                    .Select(c1 => new
+                Console.WriteLine("1. Stigande ordning");
+                Console.WriteLine("2. Fallande ordning");
+                int orderChoice;
+                if (int.TryParse(Console.ReadLine(), out orderChoice))
+                {
+                    Console.Clear(); // Rensa konsoloutput
+                    var customersQuery = orderChoice == 1
+                        ? context.Customers.OrderBy(c => c.CompanyName)
+                        : context.Customers.OrderByDescending(c => c.CompanyName);
+
+                    var customers = customersQuery
+                        .Select(c => new
+                        {
+                            c.CustomerId,
+                            c.CompanyName,
+                            c.Country,
+                            c.Region,
+                            c.Phone,
+                            OrderCount = c.Orders.Count
+                        })
+                        .ToList();
+
+                    foreach (var customer in customers)
                     {
-                        c1.CompanyName,
-                        c1.Country,
-                        c1.Region,
-                        c1.Phone,
-                        OrderCount = c1.Orders.Count
-                    });
-
-                foreach (var c1 in query1)
-                {
-                    Console.WriteLine($"Företagsnamn: {c1.CompanyName}");
-                    Console.WriteLine($"Land: {c1.Country}");
-                    Console.WriteLine($"Region: {c1.Region}");
-                    Console.WriteLine($"Telefonnummer: {c1.Phone}");
-                    Console.WriteLine($"Antal ordrar: {c1.OrderCount}");
-                    Console.WriteLine();
+                        Console.WriteLine($"ID: {customer.CustomerId}");
+                        Console.WriteLine($"Företagsnamn: {customer.CompanyName}");
+                        Console.WriteLine($"Land: {customer.Country}");
+                        Console.WriteLine($"Region: {customer.Region}");
+                        Console.WriteLine($"Telefonnummer: {customer.Phone}");
+                        Console.WriteLine($"Antal ordrar: {customer.OrderCount}");
+                        Console.WriteLine("------------------------");
+                    }
                 }
-
-
-                var query2 = context.Customers
-                    .Select(c2 => new
-                    {
-                        c2.CompanyName,
-                        c2.Country,
-                        c2.Region,
-                        c2.Phone,
-                        OrderCount = c2.Orders.Count // Räkna antal ordrar
-                    });
-
-                // Sortera efter företagsnamn i stigande ordning
-                query2 = query2.OrderBy(c2 => c2.CompanyName);
-
-                // Eller om användaren vill sortera i fallande ordning
-                // query = query.OrderByDescending(c => c.CompanyName);
-
-                foreach (var c2 in query2)
+                else
                 {
-                    Console.WriteLine($"Företagsnamn: {c2.CompanyName}");
-                    Console.WriteLine($"Land: {c2.Country}");
-                    Console.WriteLine($"Region: {c2.Region}");
-                    Console.WriteLine($"Telefon: {c2.Phone}");
-                    Console.WriteLine($"Antal ordrar: {c2.OrderCount}");
-                    Console.WriteLine();
+                    Console.Clear(); // Rensa konsoloutput
+                    Console.WriteLine("Ogiltig inmatning för ordning. Försök igen.");
                 }
-                
-                var existingCustomerIds = context.Customers.Select(c => c.CustomerId).ToList();
+            }
+            Console.Clear(); // Rensa konsoloutput efter att ha visat alla kunder
+        }
 
-                Console.WriteLine("Befintliga kund-ID:");
-                foreach (var customersId in existingCustomerIds)
-                {
-                    Console.WriteLine(customersId);
-                }
+        static void ShowCustomerDetails()
+        {
+            using (var context = new NorthWindContext())
+            {
+                Console.Clear(); // Rensa konsoloutput
+                ListAllCustomersWithIds();
 
-
-                Console.WriteLine("Ange kundens ID: ");
+                Console.WriteLine("Ange kundens ID:");
                 string customerId = Console.ReadLine();
 
                 var customer = context.Customers
-                    .Include(c => c.Orders) // Ladda ordrarna för kunden
+                    .Include(c => c.Orders)
                     .FirstOrDefault(c => c.CustomerId == customerId);
 
                 if (customer != null)
@@ -79,46 +115,66 @@ namespace Lab10NorthWind
                     Console.WriteLine($"Företagsnamn: {customer.CompanyName}");
                     Console.WriteLine($"Land: {customer.Country}");
                     Console.WriteLine($"Region: {customer.Region}");
-                    Console.WriteLine($"Telefon: {customer.Phone}");
-                    Console.WriteLine($"Antal ordrar: {customer.Orders.Count}");
-
-                    // Visa alla ordrar
-                    Console.WriteLine("Kundens ordrar:");
+                    Console.WriteLine($"Telefonnummer: {customer.Phone}");
+                    Console.WriteLine("Ordrar:");
                     foreach (var order in customer.Orders)
                     {
-                        Console.WriteLine($"Order ID: {order.OrderId}");
-                        // Visa övriga orderfält
+                        Console.WriteLine($"  Order ID: {order.OrderId}, Datum: {order.OrderDate}");
                     }
                 }
                 else
                 {
-                    Console.WriteLine("Kunden hittades inte.");
+                    Console.Clear(); // Rensa konsoloutput
+                    Console.WriteLine("Kund hittades inte.");
                 }
+            }
+            Console.Clear(); // Rensa konsoloutput efter att ha visat detaljer för en kund
+        }
 
-
-
+        static void AddCustomer()
+        {
+            using (var context = new NorthWindContext())
+            {
+                Console.Clear(); // Rensa konsoloutput
                 var newCustomer = new Customer();
 
-                Console.Write("Ange företagsnamn: ");
+                Console.WriteLine("Ange företagsnamn:");
                 newCustomer.CompanyName = Console.ReadLine();
 
-                Console.Write("Ange land: ");
+                Console.WriteLine("Ange land:");
                 newCustomer.Country = Console.ReadLine();
 
-                Console.Write("Ange region: ");
+                Console.WriteLine("Ange region:");
                 newCustomer.Region = Console.ReadLine();
 
-                Console.Write("Ange telefonnummer: ");
+                Console.WriteLine("Ange telefonnummer:");
                 newCustomer.Phone = Console.ReadLine();
 
-                // Generera en slumpad ID (5 tecken lång)
-                var random = new Random();
-                newCustomer.CustomerId = new string(Enumerable.Repeat("ABCDEFGHIJKLMNOPQRSTUVWXYZ", 5)
-                    .Select(s => s[random.Next(s.Length)]).ToArray());
+                // Generera ett slumpmässigt ID (5 tecken)
+                newCustomer.CustomerId = Guid.NewGuid().ToString().Substring(0, 5).ToUpper();
 
                 context.Customers.Add(newCustomer);
                 context.SaveChanges();
 
+                Console.Clear(); // Rensa konsoloutput
+                Console.WriteLine("Kund tillagd.");
+            }
+        }
+
+        static void ListAllCustomersWithIds()
+        {
+            using (var context = new NorthWindContext())
+            {
+                Console.Clear(); // Rensa konsoloutput
+                var customers = context.Customers
+                    .Select(c => new { c.CustomerId, c.CompanyName })
+                    .ToList();
+
+                Console.WriteLine("Tillgängliga kunder:");
+                foreach (var customer in customers)
+                {
+                    Console.WriteLine($"ID: {customer.CustomerId}, Företagsnamn: {customer.CompanyName}");
+                }
             }
         }
     }
